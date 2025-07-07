@@ -32,7 +32,15 @@ This project collects job listings from [djinni.co](https://djinni.co), extracts
     │       └── keywords.json
   ```
 
-> You can check the `attachments/screenshots` folder for example outputs.
+## Output example:
+
+`eb7c1249ffe1403293d74ab478b6f39d-0.parquet`
+![Job Listings Preview](attachments/screenshots/date=2025-03-05/job_listings.png)
+
+`keywords.json`
+![Keywords Preview](attachments/screenshots/date=2025-03-05/keywords.png)
+
+> You can check the `attachments/data` folder for example output files.
 
 ## Planned Features
 
