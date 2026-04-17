@@ -5,4 +5,4 @@ s3fs
 beautifulsoup4
 emoji
 requests
-openai
+# openai
