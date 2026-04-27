@@ -7,6 +7,7 @@ This project automates data collection using **AWS Lambda**, **Amazon SQS**, **D
 ## Architecture Overview
 
 Because the target websites work differently, the data collection is split into two approaches:
+
 - **Djinni:** Provides an API, so a single Lambda function is enough to fetch the data.
 - **DOU:** Requires web scraping. To handle large volumes of pages and avoid AWS Lambda's 15-minute timeout, the process is split into smaller tasks using an SQS queue.
 
@@ -17,6 +18,7 @@ Automated tasks are triggered via Amazon EventBridge **daily at 4:00 AM (Kyiv ti
 ![Data Pipeline Architecture](attachments/images/architecture.png)
 
 ### Components
+
 1. **Dispatcher (`dou_dispatcher.py`)**: A cron-triggered Lambda that acts as an orchestrator. It fetches the last processed date from DynamoDB and triggers Producer functions for each specific tech category (e.g., Python, Java, DevOps).
 2. **Producer (`dou_producer.py`)**: Handles pagination on the target website, extracts job URLs, and sends them to the Amazon SQS queue.
 3. **Worker (`dou_worker.py`)**: Reads URLs from the SQS queue, scrapes the actual web pages (titles, salaries, descriptions), and saves the raw data as JSON files to S3.
@@ -24,12 +26,13 @@ Automated tasks are triggered via Amazon EventBridge **daily at 4:00 AM (Kyiv ti
 5. **Djinni Parser (`djinni_parser.py`)**: A standalone Lambda function that fetches job data directly via the Djinni API and saves it to S3.
 
 ## Scraping & Reliability Details
+
 To make the web scraping stable, the project uses several techniques:
+
 - **SQS & DLQ**: If a page fails to load, the system retries. If it fails repeatedly, the message goes to a **Dead Letter Queue (DLQ)** for manual check without stopping the whole pipeline.
 - **URL Encoding**: Handles complex query parameters (like `C++` -> `C%2B%2B`) and Cyrillic headers to prevent encoding crashes.
 - **Rate Limiting**: Uses random delays and HTTP headers to mimic human browsing and avoid being blocked by servers.
 **Recursive Timeouts**: The Aggregator tracks its own AWS Lambda execution time and recursively self-invokes if it approaches the timeout limit, ensuring massive datasets are processed without interruption.
-
 
 ## Data Storage
 
@@ -39,6 +42,7 @@ Data is stored in an AWS S3 bucket. DynamoDB is used to track the last processed
 - **Processed Data:** `.parquet` format (cleaned and partitioned by date). Parquet is used because it's optimized for future SQL database integration.
 
 ### S3 Bucket Structure
+
 ```text
 s3://bucket-name/
   ├── djinni/
@@ -82,12 +86,15 @@ Each key is a job post ID, and each value is a list of relevant tech skills extr
 If you deploy this for the first time, you might want to fetch historical data:
 
 ### DOU Pipeline
+
 The DOU pipeline handles backfilling automatically. If DynamoDB is empty, it will start fetching historical data using the SQS queues.
 
 ### Djinni Pipeline
-Since the Djinni parser is just one Lambda function, downloading months of historical data at once might trigger the 15-minute AWS timeout. 
+
+Since the Djinni parser is just one Lambda function, downloading months of historical data at once might trigger the 15-minute AWS timeout.
 
 To avoid this on your first run:
+
 - **Option 1 (Recommended):** Run `djinni_parser.py` locally on your computer. This ignores the AWS time limit and saves all active jobs directly to S3.
 - **Option 2:** If you want to run it in AWS, temporarily change the start date in the code (replace `1970-01-01` with a more recent date, like 2 weeks ago) so it finishes faster.
 
