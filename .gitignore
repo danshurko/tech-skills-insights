@@ -8,6 +8,7 @@
 *.zip
 lambdas/**/*.zip
 layers/**/*.zip
+layers/scraping_layer/python/
 
 # macOS system files
 .DS_Store

@@ -1,19 +1,19 @@
-LAYER_ZIP=layer.zip
-REQUIREMENTS=requirements.txt
+REQUIREMENTS = requirements.txt
+LAYER_DIR = layers/scraping_layer/python
 
-layer:
-	rm -rf python $(LAYER_ZIP)
-	mkdir -p python
-	pip install -r $(REQUIREMENTS) -t python/
-	zip -r $(LAYER_ZIP) python
-	rm -rf python
-	@echo "Created $(LAYER_ZIP)"
+build-layer:
+	@echo "Cleaning old layer files..."
+	rm -rf $(LAYER_DIR)
+	@echo "Downloading dependencies for Lambda layer..."
+	pip install -r $(REQUIREMENTS) -t $(LAYER_DIR) --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.13
+	@echo "Done! Layer dependencies are ready for Terraform."
 
 clean:
-	rm -rf python $(LAYER_ZIP)
-	@echo "Cleaned temporary files"
+	@echo "Cleaning temporary layer files..."
+	rm -rf $(LAYER_DIR)
+	@echo "Cleaned successfully."
 
 help:
 	@echo "Usage:"
-	@echo "  make layer  - build layer.zip with libraries"
-	@echo "  make clean  - clean all temporary files"
+	@echo "  make build-layer  - Download Linux-compatible libraries for Terraform"
+	@echo "  make clean        - Remove downloaded libraries"
