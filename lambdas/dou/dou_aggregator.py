@@ -79,14 +79,18 @@ def update_last_aggregated_date(new_date):
 def lambda_handler(event, context):
     start_date = get_last_aggregated_date()
     current_date = start_date
-    yesterday = date.today() - timedelta(days=1)
+    end_date = date.today() - timedelta(days=1)
+
+    if start_date > end_date:
+        logger.info("No new dates to process. Exiting.")
+        return {'statusCode': 200, 'body': 'No new dates to process.'}
 
     days_processed = 0
     total_vacancies_processed = 0
 
     invocation_count = event.get('invocation_count', 1)
 
-    while current_date <= yesterday:
+    while current_date <= end_date:
         # SMART STOP & RECURSION: Save state and self-invoke if time is running out
         if hasattr(context, 'get_remaining_time_in_millis'):
             if context.get_remaining_time_in_millis() < 60000:
