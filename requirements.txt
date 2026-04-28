@@ -1,8 +1,5 @@
-boto3
-pandas
-pyarrow
-s3fs
+requests
 beautifulsoup4
 emoji
-requests
+s3fs
 # openai
