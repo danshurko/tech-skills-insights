@@ -2,7 +2,7 @@
 
 A Python data pipeline designed to collect, process, and store tech job market data from [djinni.co](https://djinni.co) and [jobs.dou.ua](https://jobs.dou.ua).
 
-This project automates data collection using **AWS Lambda**, **Amazon SQS**, **DynamoDB**, and **S3**.
+This project automates data collection using **AWS Lambda**, **Amazon SQS**, **DynamoDB**, and **S3**, with the entire infrastructure provisioned as code using **Terraform**.
 
 ## Architecture Overview
 
@@ -32,7 +32,7 @@ To make the web scraping stable, the project uses several techniques:
 - **SQS & DLQ**: If a page fails to load, the system retries. If it fails repeatedly, the message goes to a **Dead Letter Queue (DLQ)** for manual check without stopping the whole pipeline.
 - **URL Encoding**: Handles complex query parameters (like `C++` -> `C%2B%2B`) and Cyrillic headers to prevent encoding crashes.
 - **Rate Limiting**: Uses random delays and HTTP headers to mimic human browsing and avoid being blocked by servers.
-**Recursive Timeouts**: The Aggregator tracks its own AWS Lambda execution time and recursively self-invokes if it approaches the timeout limit, ensuring massive datasets are processed without interruption.
+- **Recursive Timeouts**: The Aggregator tracks its own AWS Lambda execution time and recursively self-invokes if it approaches the timeout limit, ensuring massive datasets are processed without interruption.
 
 ## Data Storage
 
@@ -81,7 +81,44 @@ Each key is a job post ID, and each value is a list of relevant tech skills extr
 
 > You can check the [`attachments/data`](attachments/data) folder for sample output files.
 
-## Initial Setup & Backfill
+## Infrastructure Deployment
+
+### 1. AWS Configuration
+
+Before deploying the infrastructure or running scripts locally, you must configure your AWS credentials. This allows Terraform to provision resources and enables `boto3` to authenticate when you run Lambda functions on your local machine.
+
+1. Install the [AWS CLI](https://aws.amazon.com/cli/).
+2. Run the configuration command in your terminal:
+
+   ```bash
+   aws configure
+   ```
+
+3. Enter your details when prompted:
+   - **AWS Access Key ID:** Your Access Key
+   - **AWS Secret Access Key:** Your Secret Key
+   - **Default region name:** `eu-north-1` *(or your target AWS region)*
+   - **Default output format:** `json`
+
+### 2. Deployment (Terraform)
+
+The infrastructure is fully managed via Infrastructure as Code (IaC). To deploy the project:
+
+1. **Build dependencies:** Use the `Makefile` to download the required Linux-compatible Python packages for the Lambda layers.
+
+   ```bash
+   make build-layer
+   ```
+
+2. **Provision resources:** Use Terraform to create the AWS resources.
+
+   ```bash
+   cd infrastructure
+   terraform init
+   terraform apply
+   ```
+
+## Data Backfill (Historical Data)
 
 If you deploy this for the first time, you might want to fetch historical data:
 
@@ -100,23 +137,25 @@ To avoid this on your first run:
 
 ## Roadmap & Planned Features
 
-- **Infrastructure as Code (IaC):** Add **Terraform** to automate the creation of AWS resources (Lambdas, SQS, DynamoDB, S3).
 - **SQL Database Integration:** Load the Parquet data into a relational SQL database for easier querying.
 - **Keyword Extraction (LLM):** Implement a separate script to read the raw job descriptions and extract specific technologies. The exact approach is to be decided — it could involve using the OpenAI API as in the past or running open-source models in **Google Colab** or **Kaggle Notebooks** to optimize costs.
 - **Data Analytics:** Build visual dashboards to track framework popularity and salary trends over time.
 
 ## Requirements
 
-- Python 3.12+
-- AWS credentials configured (via `boto3`)
-- Required libraries:
+- Python 3.13
+- AWS credentials configured
+- Terraform installed
+- Required Python libraries:
   - `requests`, `beautifulsoup4`, `pandas`, `pyarrow`, `boto3`, `s3fs`, `emoji`
 
 ## Technologies Used
 
 - **Cloud**: AWS (Lambda, SQS, S3, DynamoDB, EventBridge)
+- **Infrastructure as Code**: Terraform
 - **Language**: Python 3
 - **Data Processing**: `pandas`, `pyarrow`
 - **Web Scraping**: `requests`, `BeautifulSoup4`
 - **Text Cleaning**: `emoji`
 - **AWS Integration**: `boto3`, `s3fs`
+- **Automation**: `make`
