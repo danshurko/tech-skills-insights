@@ -1,3 +1,14 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Lambda artifacts
+*.zip
+lambdas/**/*.zip
+layers/**/*.zip
+
 # macOS system files
 .DS_Store
 
